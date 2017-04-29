@@ -15,26 +15,20 @@ public class GameScreen extends JPanel implements MouseListener {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	
-	private BufferedImage screen;
-	private int frameWidth, frameHeight;
-	
+		
 	private Queue<SceneObject> sceneObjects;
 	private SceneObject affectedObject;
 	private MouseEvent mouse;
+
+	private GameClassic screenController;
 	
 	public GameScreen(Dimension resolution) {
-		//super();
+		super();
 		this.addMouseListener(this);
-		
-		frameWidth = resolution.width;
-		frameHeight = resolution.height;
-		
-		// list of objects to be drawn
-		sceneObjects =  new LinkedList<SceneObject>(); //new HashMap<Image, Point>();
 		
 	}
 
+	/*
 	public void removeSceneObject(SceneObject sObj)
 	{
 		sceneObjects.remove(sObj);
@@ -50,6 +44,7 @@ public class GameScreen extends JPanel implements MouseListener {
 		sceneObjects.clear();
 	}
 	
+	
 	public SceneObject[] getSceneObjects()
 	{
 		SceneObject[] list = new SceneObject[ sceneObjects.size() ];
@@ -62,109 +57,37 @@ public class GameScreen extends JPanel implements MouseListener {
 		return list; 
 		//return (SceneObject[]) sceneObjects.toArray();
 	}
+	*/
+
+	// GameScreen meets GameClassic
+	public void setScreenController(GameClassic game)
+	{
+		this.screenController = game;
+		game.setIODevice(this);
+	}
 	
 	@Override
 	protected void paintComponent(Graphics g) {
 		// FIXME: is this line necessary ?
-		super.paintComponent(g);
+		//super.paintComponent(g);
 		
-		for (SceneObject sObj : sceneObjects)
-		{
-			//if (sObj.needUpdate() && sObj.isVisible()) {
-			if (sObj.isVisible()) {
-				g.drawImage(sObj.getImage(), sObj.getX(),sObj.getY(),this);
-				//sObj.update();
-				
-				//System.out.print("\nID: "+ sObj.getZIndex() +" X:"+ sObj.getX() +" Y: "+ sObj.getY()); 
-			}
-		}
-		
-		this.mouse = null;
-		this.affectedObject = null;
-		//System.out.print("\nTotal Objs: "+ sceneObjects.size());
-		
+		if (this.screenController != null) {
+			BufferedImage screen = screenController.readScreen();
+			// Center the drawing
+			g.drawImage(screen , 0,0 ,this);
+		}	
 	}
 	
 	public MouseEvent getMouse()
 	{
-		return mouse;
-	}
-	
-	public SceneObject getTargetObject()
-	{
-		return affectedObject;
+		MouseEvent m = this.mouse;
+		this.mouse = null;
+		return m;
 	}
 	
 	@Override
 	public void mousePressed(MouseEvent mouse) {
-
-		int x = mouse.getX();
-		int y = mouse.getY();
 		this.mouse = mouse;
-
-		long maxZ = 0;
-		affectedObject = null;
-		
-		// search for objects
-		for (SceneObject sObj : sceneObjects) {
-			if (sObj.hit(x, y) && sObj.getZIndex() >= maxZ) {
-				affectedObject = sObj;
-				maxZ = sObj.getZIndex();
-			}
-		}
-		
-		if (affectedObject != null) {
-			System.out.print("\nOBJ: " + affectedObject.getZIndex());
-		}
-		//repaint();
-
-		/*
-		int x = mouse.getX();
-		int y = mouse.getY();
-		
-		System.out.print("\nClick: " + mouse.getButton());
-		
-		////////////RIGHT MOUSE BUTTON BEHAVIOR
-		if (mouse.getButton() == MouseEvent.BUTTON3) {
-			
-			long maxZ = 0;
-			SceneObject del = null;
-			for (SceneObject o : sceneObjects) {
-				if (o.hit(x, y) && o.getZIndex() >= maxZ) {
-					del = o;
-					maxZ = o.getZIndex();
-					//break;
-				}
-			}
-			
-			if (del != null) {
-				System.out.print("\nDEL: " + del.getZIndex());
-				sceneObjects.remove(del);
-			}
-			repaint();
-			return;
-			
-		}
-		
-		//////////////// LEFT MOUSE BUTTON BEHAVIOR
-		int size = 35;
-		
-		BufferedImage img2 = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-		
-		//Color c = new Color();
-		Graphics g = img2.createGraphics();
-		g.setColor(new Color(x & 0xFF, y & 0xFF, size & 0xFF));
-		g.fillOval(0, 0, size, size);
-		g.setColor(new Color(255, 255, 255, 64));
-		g.fillOval(3, 3, size/2, size/2);
-		
-		g.dispose();
-		
-		addSceneObject(new SceneObject(img2, x-size/2, y-size/2));
-		this.repaint();
-		
-		System.out.print("\nX: "+x + ", Y:"+ y);
-		*/
 	}
 
 

@@ -1,9 +1,17 @@
 package GameClassics;
+import java.awt.Graphics;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 import java.util.Scanner;
 
 import javax.swing.JOptionPane;
@@ -12,13 +20,14 @@ public abstract class GameClassic {
 
 	protected static final int defaultGameWidth = 800, defaultGameHeight = 600;
 	private static final String cfgFilePath = "GameClassics.cfg";
-	//protected File cfgFile;
 	
 	protected String name;
 	protected int maxWidth, maxHeight;
 
 	protected BufferedImage screen;
-	protected GameScreen outputDevice;
+	protected Graphics screenGraphics;
+	protected Queue<SceneObject> sceneObjects;
+	protected GameScreen ioDevice;
 	
 	protected long score;
 	private boolean running;
@@ -34,6 +43,8 @@ public abstract class GameClassic {
 		this.maxHeight = height;
 		
 		this.screen = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		this.screenGraphics = screen.createGraphics();
+		sceneObjects =  new LinkedList<SceneObject>();
 		
 		// check for configuration file
 		File cfgFile = new File(cfgFilePath);
@@ -55,34 +66,37 @@ public abstract class GameClassic {
 	 * Reads the configuration file, useful for all the GameClassic objects
 	 * as well other classes that need to list the scores
 	 */
-	public static String[] readGameConfigurationFile() throws IOException
+	public static List<String> readGameConfigurationFile() throws IOException
 	{
 
-		Scanner cfgScanner = new Scanner(Paths.get(cfgFilePath),"UTF-8");
+		// Charset.forName("UTF-8")
+		// FIXME: Safe ?
+		return Files.readAllLines(Paths.get(cfgFilePath),Charset.forName("UTF-8"));
 		
-		//cfgScanner.useDelimiter("\n");
-		
-		// FIXME : Stupid way of counting lines ...
-		int numberOfLines = 0;
-		while (cfgScanner.nextLine() != null) numberOfLines++;
-			
-		String[] lines = new String[numberOfLines]; 
-		
-		cfgScanner.reset();
-		
-		for (int l = 0; l < numberOfLines; l++) {
-			lines[l] = cfgScanner.nextLine();
-		}
-		cfgScanner.close();
-		
-		return lines;
-
 	}
 
-	public void setOutputDevice(GameScreen gs)
+	public void setIODevice(GameScreen gs)
 	{
-		this.outputDevice = gs;
-		gs.clear();
+		this.ioDevice = gs;
+		sceneObjects.clear();
+	}
+	
+	protected SceneObject getAffectedObject(int x, int y)
+	{
+		// TODO: Implement efficient space BSP-Tree
+		debug("("+ x +","+ y +")");
+		
+		// search for objects
+		long maxZ = 0;
+		SceneObject affectedObject = null;
+		for (SceneObject sObj : sceneObjects) {
+			if (sObj.hit(x, y) && sObj.getZIndex() >= maxZ) {
+				affectedObject = sObj;
+				maxZ = sObj.getZIndex();
+			}
+		}
+	
+		return affectedObject;
 	}
 	
 	
@@ -93,10 +107,10 @@ public abstract class GameClassic {
 	
 	protected void loadScores() throws Exception {
 
-		String[] lines = readGameConfigurationFile();
+		List<String> lines = readGameConfigurationFile();
 		
 		for (String line : lines) {
-			if (line.contains(this.name)){
+			if (line.toLowerCase().contains(this.name.toLowerCase())){
 				String[] fields = line.split(":");
 				try {
 					this.score = new Integer(fields[1].trim());	
@@ -107,32 +121,13 @@ public abstract class GameClassic {
 				break;
 			}
 		}
-		/*
-		Scanner cfgScanner = new Scanner(Paths.get(cfgFilePath),"UTF-8");
-		
-		//cfgScanner.useDelimiter("\n");
-		
-		while (cfgScanner.hasNextLine()) {
-		
-			 // find strings of the form "Game name : 0000..."
-			 //  where 0000.. represents the previous score.
-			 
-			String[] line = cfgScanner.nextLine().split(":");
-			
-			if (line[0].contains(this.name)){
-				this.score = new Integer(line[1].trim());
-				break;
 			}
-		}
-		
-		cfgScanner.close();
-		*/
-	}
 
 	protected void saveScores() throws Exception 
 	{
 		
-		String[] lines = readGameConfigurationFile();
+		//String[] lines = readGameConfigurationFile();
+		String[] lines = (String[]) readGameConfigurationFile().toArray();
 		
 		FileWriter cfgFile = new FileWriter(cfgFilePath);
 		
@@ -148,8 +143,20 @@ public abstract class GameClassic {
 		
 		cfgFile.close();
 	}
-
+	
 	public BufferedImage readScreen() {
+		
+		// compose the image
+		// TODO: Make it more efficient by skipping this process when not necessary.
+		for (SceneObject sObj : sceneObjects)
+		{
+			//if (sObj.needUpdate() && sObj.isVisible()) {
+			if (sObj.isVisible()) {
+				screenGraphics.drawImage(sObj.getImage(), sObj.getX(), sObj.getY(), null);
+				//sObj.update(); 
+			}
+		}
+
 		return screen;
 	}
 
@@ -159,14 +166,13 @@ public abstract class GameClassic {
 	}
 	
 	public void start() throws Exception {
-		//loadScores();
+		loadScores();
 		running = true;		// FIXME : Possibly not thread safe.
 		debug("Running!");
 	}
 
 	public void pause() {
-		running = false;
-		// TODO Auto-generated method stub
+		running = false;	// FIXME: Save scores everytime the game pouses ?
 
 	}
 

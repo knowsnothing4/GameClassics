@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.util.Iterator;
 import java.util.Random;
 
 public class TestFrameWork extends GameClassic {
@@ -13,7 +14,7 @@ public class TestFrameWork extends GameClassic {
 	private Random rng;
 	
 	public TestFrameWork() {
-		super("Test Framework", 800, 600);
+		super("Test FrameWork", 800, 600);
 		
 		background = null;
 		catcher = null;
@@ -79,23 +80,23 @@ public class TestFrameWork extends GameClassic {
 		// create background image
 		BufferedImage bg = new BufferedImage(this.maxWidth, this.maxHeight, BufferedImage.TYPE_INT_ARGB);
 		
-		Graphics g = bg.createGraphics();
+		Graphics bgGraphics = bg.createGraphics();
 		
 		// fill the bg
-		g.setColor(new Color(10, 10, 200));
-		g.fillRect(0, 0, bg.getWidth(), bg.getHeight());
+		bgGraphics.setColor(new Color(10, 10, 200));
+		bgGraphics.fillRect(0, 0, bg.getWidth(), bg.getHeight());
 		
-		g.setColor(new Color(10, 20, 255));
+		bgGraphics.setColor(new Color(10, 20, 255));
 		int spacing = bg.getWidth() / 100;
 		for (int i = 0; i < bg.getWidth(); i += spacing) {
 			
-			g.drawRect(i, i, bg.getWidth() -2*i, bg.getHeight() -2*i);
+			bgGraphics.drawRect(i, i, bg.getWidth() -2*i, bg.getHeight() -2*i);
 		}
 		
-		g.dispose();
+		bgGraphics.dispose();
 		
 		background = new SceneObject(bg, 0, 0);
-		outputDevice.addSceneObject(background);
+		sceneObjects.add(background);
 		
 		///// Creating the cather object
 		
@@ -105,7 +106,7 @@ public class TestFrameWork extends GameClassic {
 		BufferedImage imgCatcher = renderCatcher(x, y, catcherW, catcherH);
 		
 		catcher = new SceneObject(imgCatcher, x, y);
-		outputDevice.addSceneObject(catcher);
+		sceneObjects.add(catcher);
 
 	}
 	
@@ -127,57 +128,62 @@ public class TestFrameWork extends GameClassic {
 		// is the game running ?
 		if (!super.update()) return false;
 		
-		// bubble up!
-		SceneObject[] objList = outputDevice.getSceneObjects();
-		
-		if (objList != null) {
-			for (SceneObject bubble: objList) {
-				if (bubble.getZIndex() != background.getZIndex() &&
-					bubble.getZIndex() != catcher.getZIndex())
-					bubble.moveBy(0, -1);
-				
-				int bubbleCenterX = (bubble.getX() - bubble.getImage().getWidth()/2);
-				//int bubbleCenterY = (bubble.getY() + bubble.getImage().getHeight()/2);
-				int catcherBase = catcher.getY() + catcher.getImage().getHeight();
-				
-				if (bubble.getY() <= catcherBase &&
-					bubbleCenterX > catcher.getX() &&
-					bubbleCenterX < catcher.getX() + catcher.getImage().getWidth() )
-				{
-					outputDevice.removeSceneObject(bubble);
-					score -= 10;
-					debug("SCORE: " + score);
-				}
-				
-				if (bubble.getY() < 0) {
-					outputDevice.removeSceneObject(bubble);
-					score += 10;
-					debug("SCORE: " + score);
-				}
+		for (SceneObject bubble: sceneObjects)
+		{
+
+			// move everything but the catcher and background
+			if (bubble.getZIndex() != background.getZIndex() &&
+				bubble.getZIndex() != catcher.getZIndex())
+				bubble.moveBy(0, -1);
+			
+			int bubbleCenterX = (bubble.getX() - bubble.getImage().getWidth()/2);
+			//int bubbleCenterY = (bubble.getY() + bubble.getImage().getHeight()/2);
+			int catcherBase = catcher.getY() + catcher.getImage().getHeight();
+			
+			if (bubble.getY() <= catcherBase &&
+				bubbleCenterX > catcher.getX() &&
+				bubbleCenterX < catcher.getX() + catcher.getImage().getWidth() )
+			{
+				sceneObjects.remove(bubble);
+				score -= 10;
+				debug("SCORE: " + score);
+				break;
+			}
+			
+			if (bubble.getY() < 0) {
+				sceneObjects.remove(bubble);
+				score += 10;
+				debug("SCORE: " + score);
+				break;
 			}
 		}
 		moveCatcher(30);
 		
 		// process mouse events
-		MouseEvent mouse = outputDevice.getMouse();
+		MouseEvent mouse = ioDevice.getMouse();
 		if (mouse == null) return false;
-	
-		debug("#OBJS: "+ outputDevice.getSceneObjects().length);
+		int x = mouse.getX();
+		int y = mouse.getY();
 		
-		if (mouse.getButton() == 1) {
+		switch (mouse.getButton()) {
+		case 1:
 			int size = 35;
-			int x = mouse.getX() - size /2;
-			int y = mouse.getY() - size /2;
+			x -= size /2;
+			y -= size /2;
 			
-			outputDevice.addSceneObject(new SceneObject(renderBubble(x, y, size), x, y));
-			System.out.print("\nOBJECT ADDED TESTFRAMEWORK");
-		}
-		
-		if (mouse.getButton() == 3) {
-			SceneObject target = outputDevice.getTargetObject();
-			outputDevice.removeSceneObject(target);
-		}
+			sceneObjects.add(new SceneObject(renderBubble(x, y, size), x, y));
+			break;
 			
+		case 3:
+			debug("BUTTON: "+ mouse.getButton());
+			SceneObject target = getAffectedObject(x, y);
+			
+			// FIXME: Should not have to check for background removal
+			if (target != null && target.getZIndex() != background.getZIndex())
+				sceneObjects.remove(target);
+			break;
+		}
+		debug("#NUM_OBJ: "+ sceneObjects.size());
 		return true;
 	}
 
