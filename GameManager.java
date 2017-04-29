@@ -87,7 +87,6 @@ public class GameManager extends JFrame implements Runnable, ActionListener, Key
 		
 		setFPS(20);
 		screen = new GameScreen(windowDimension);
-		//screen.add
 		add(screen, BorderLayout.CENTER);
 		
 		pack();
@@ -143,16 +142,16 @@ public class GameManager extends JFrame implements Runnable, ActionListener, Key
 		if (item.getActionCommand().equals(GameList.TestFramework.getName())) {
 			
 			activeGame = GameList.TestFramework.getGame();
-			activeGame.setOutputDevice(screen);
+			screen.setScreenController(activeGame);
 			
 			try {
 				activeGame.start();
+				this.setTitle("ACTIVE: TEST FRAMEWORK | SCORE: " +activeGame.getScore());
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
-			this.setTitle("ACTIVE: TEST FRAMEWORK | SCORE: " +activeGame.getScore());
 		}
 		
 	}
