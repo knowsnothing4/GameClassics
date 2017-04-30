@@ -1,9 +1,7 @@
 package GameClassics;
 import java.awt.Graphics;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -12,7 +10,7 @@ import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.Scanner;
+import java.util.Random;
 
 import javax.swing.JOptionPane;
 
@@ -31,7 +29,7 @@ public abstract class GameClassic {
 	
 	protected long score;
 	private boolean running;
-	;
+	protected static final Random rng = new Random();	
 	
 	public GameClassic(String name, int width, int height) {
 
@@ -61,7 +59,7 @@ public abstract class GameClassic {
 				JOptionPane.showMessageDialog(null, "Impossible to create: \"" + cfgFilePath +"\"");
 			}
 	}
-
+	
 	/*
 	 * Reads the configuration file, useful for all the GameClassic objects
 	 * as well other classes that need to list the scores
@@ -75,6 +73,11 @@ public abstract class GameClassic {
 		
 	}
 
+	protected int rand(int min, int max)
+	{
+		return rng.nextInt(max - min) + min;
+	}
+	
 	public void setIODevice(GameScreen gs)
 	{
 		this.ioDevice = gs;
@@ -125,17 +128,16 @@ public abstract class GameClassic {
 
 	protected void saveScores() throws Exception 
 	{
-		
-		//String[] lines = readGameConfigurationFile();
-		String[] lines = (String[]) readGameConfigurationFile().toArray();
+
+		List<String> lines = readGameConfigurationFile();
 		
 		FileWriter cfgFile = new FileWriter(cfgFilePath);
 		
-		String[] fields = {"",""};
 		for (String line : lines) {
-			if (line.contains(this.name)){
-				fields = line.split(":");
-				fields[1] = new Long(score).toString();
+			
+			String[] fields = line.split(":");
+			if (line.toLowerCase().contains(this.name.toLowerCase())){
+				fields[1] = score + "";
 			}
 			
 			cfgFile.write(fields[0] +" : "+ fields[1] + "\n");

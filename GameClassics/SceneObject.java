@@ -27,6 +27,7 @@ public class SceneObject {
 	private int xpos, ypos;					// (x,y) where this image should be rendered
 	private double collisionRadius;			// outer circular collision box radius (first check)
 	
+	private String tag;
 	
 	public SceneObject(BufferedImage image) {
 		this(image, 0, 0);
@@ -40,10 +41,22 @@ public class SceneObject {
 		this.image = image;
 		this.visible = true;
 		this.needUpdate = true;	// this will be set to true the first time.
+		this.tag = "";
 		
 		collisionRadius = pythagoras(image.getWidth(), image.getHeight()) * 0.5;
 	}
 
+	protected void setTag(String tag)
+	{
+		this.tag = tag;
+	}
+	
+	protected boolean tag(String tag)
+	{
+		return (this.tag.equals(tag));
+	}
+	
+	
 	// scene objects won't be drawn twice if they don't update
 	// by changing their internal image or moving.
 	public boolean needUpdate()

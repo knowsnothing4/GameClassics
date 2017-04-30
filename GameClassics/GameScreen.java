@@ -4,8 +4,6 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
-import java.util.LinkedList;
-import java.util.Queue;
 
 import javax.swing.JPanel;
 
@@ -15,66 +13,42 @@ public class GameScreen extends JPanel implements MouseListener {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-		
-	private Queue<SceneObject> sceneObjects;
-	private SceneObject affectedObject;
+
 	private MouseEvent mouse;
 
 	private GameClassic screenController;
+
+	private int xOffset, yOffset;
 	
 	public GameScreen(Dimension resolution) {
 		super();
 		this.addMouseListener(this);
 		
 	}
-
-	/*
-	public void removeSceneObject(SceneObject sObj)
-	{
-		sceneObjects.remove(sObj);
-	}
 	
-	public void addSceneObject(SceneObject sObj)
-	{
-		sceneObjects.add(sObj);
-	}
-	
-	
-	public void clear() {
-		sceneObjects.clear();
-	}
-	
-	
-	public SceneObject[] getSceneObjects()
-	{
-		SceneObject[] list = new SceneObject[ sceneObjects.size() ];
-		
-		int k = 0;
-		for(SceneObject obj : sceneObjects) {
-			list[k++] = obj;
-		}
-		
-		return list; 
-		//return (SceneObject[]) sceneObjects.toArray();
-	}
-	*/
-
 	// GameScreen meets GameClassic
 	public void setScreenController(GameClassic game)
 	{
 		this.screenController = game;
 		game.setIODevice(this);
+		
+		BufferedImage screen = screenController.readScreen();
+		
+		// Center the drawing
+		xOffset = (this.getWidth() - screen.getWidth()) / 2;
+		yOffset = (this.getHeight() - screen.getHeight()) / 2; 
+		//super.repaint();
 	}
 	
 	@Override
 	protected void paintComponent(Graphics g) {
 		// FIXME: is this line necessary ?
-		//super.paintComponent(g);
+		super.paintComponent(g);
 		
 		if (this.screenController != null) {
 			BufferedImage screen = screenController.readScreen();
-			// Center the drawing
-			g.drawImage(screen , 0,0 ,this);
+			g.drawImage(screen , 0, 0,this);
+			//g.drawImage(screen , xOffset, yOffset,this);
 		}	
 	}
 	

@@ -3,10 +3,10 @@ package GameClassics;
 public enum GameList {
 	
 	TestFramework	("Framework Tester", new TestFrameWork()),
+	TicTacToe 		("Tic Tac Toe", new TicTacToe()),
 	Tetris			("Tetris", null),
 	MineSweeper		("Mine Sweeper", null),
 	Snake			("Snake", null),
-	TicTacToe 		("Tic Tac Toe", null),
 	BreakOut		("Break Out", null),
 	GoogleDinossaur	("Google Dinoussaur", null),
 	Ludo 			("Ludo", null),
@@ -16,9 +16,10 @@ public enum GameList {
 	Pacman 			("Pacman", null),
 	SpaceInvaders 	("Space Invaders", null),
 	Game2048 		("2048", null),
+	Sudoku	 		("Sudoku", null),
 	Poker	 		("Texas Hold'em", null),
-	FreeCell	 	("Free Cell", null),
-	Sudoku	 		("Sudoku", null);
+	FreeCell	 	("Free Cell", null);
+	
 	
 	private String name;
 	private GameClassic game;

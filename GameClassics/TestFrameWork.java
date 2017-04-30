@@ -1,28 +1,44 @@
 package GameClassics;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.util.Iterator;
-import java.util.Random;
+
+/*
+ * A game that tests the framework's ability to handle mouse clicks, 
+ * object inclusion, removal and tracking.
+ * 
+ * How to play:
+ * -----------
+ * 
+ * 	1. Click the left mouse button to add bubbles
+ * 	2. Click the right mouse button to remove bubbles
+ * 	3. When the bubble popper hits your bubbles you lose 10 points
+ * 	4. when your bubbles make it to end you get 10 points.
+ * 
+ */
 
 public class TestFrameWork extends GameClassic {
 
-	//private GameScreen out;
-	private SceneObject background, catcher;
-	private Random rng;
+	private SceneObject background, bubblePopper, scoreDisplay;
+	private int velocity;
+	private static final int bubbleSize = 35;
+	private static final String REMOVABLE = "REMOVABLE";
 	
 	public TestFrameWork() {
 		super("Test FrameWork", 800, 600);
 		
 		background = null;
-		catcher = null;
-		rng = new Random();
+		bubblePopper = null;
 	}
 
-	private BufferedImage renderBubble(int x, int y, int size)
+	/////////////////// object rendering section 
+	private BufferedImage renderBubble(int x, int y)
 	{
+		int size = bubbleSize;
 		BufferedImage bubble = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 		
 		Graphics g = bubble.createGraphics();
@@ -46,19 +62,12 @@ public class TestFrameWork extends GameClassic {
 		return bubble;
 	}
 	
-	private BufferedImage renderCatcher(int x, int y, int w, int h)
+	private BufferedImage renderBubblePopper(int w, int h)
 	{
 		BufferedImage imgCatcher = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 		
 		Graphics g = imgCatcher.createGraphics();
-		
-		/*
-		g.setColor(new Color(0xFF, 0xFF, 0xFF));
-		g.fillRect(0, 0, w, h);
-		
-		return imgCatcher;
-		*/
-		
+			
 		// body
 		g.setColor(new Color(0xAF, 0xFF, 0xAA, 0xFF));
 		g.fillRoundRect(0, 0, w, h, 8, 8);
@@ -71,22 +80,18 @@ public class TestFrameWork extends GameClassic {
 		
 	}
 	
-	
-	@Override
-	public void start() throws Exception
+	private BufferedImage renderBackground()
 	{
-		super.start();
-		
-		// create background image
 		BufferedImage bg = new BufferedImage(this.maxWidth, this.maxHeight, BufferedImage.TYPE_INT_ARGB);
 		
 		Graphics bgGraphics = bg.createGraphics();
 		
 		// fill the bg
-		bgGraphics.setColor(new Color(10, 10, 200));
+		bgGraphics.setColor(new Color(10, 10, 200, 127));
 		bgGraphics.fillRect(0, 0, bg.getWidth(), bg.getHeight());
 		
-		bgGraphics.setColor(new Color(10, 20, 255));
+		// do patterns
+		bgGraphics.setColor(new Color(100, 200, 255, 65));
 		int spacing = bg.getWidth() / 100;
 		for (int i = 0; i < bg.getWidth(); i += spacing) {
 			
@@ -94,70 +99,141 @@ public class TestFrameWork extends GameClassic {
 		}
 		
 		bgGraphics.dispose();
+		return bg;
 		
-		background = new SceneObject(bg, 0, 0);
+	}
+		
+	private void markTarget(SceneObject target)
+	{	
+		Graphics g = target.getImage().createGraphics();
+		g.setColor(new Color(0xff, 0xff, 0xff));
+		g.drawOval(5, 5, 20, 20);
+		g.drawLine(8, 8, 22, 22);
+		g.drawLine(8, 22, 22, 8);
+		g.dispose();
+	}
+
+	
+	// Keeps the score valus consistent and prints it on screen 
+	private void score(int ds)
+	{
+		this.score += ds;
+		if (score < 0) score = 0;
+		
+		BufferedImage imgScore = scoreDisplay.getImage(); 
+		Graphics2D s = imgScore.createGraphics();
+		
+		s.setBackground(new Color(0, 0 ,0 ,0));
+		s.clearRect(0, 0, imgScore.getWidth(), imgScore.getHeight());
+		if (ds >= 0)
+			s.setColor(new Color(0xA0, 0xCF ,0x10));
+		else
+			s.setColor(new Color(0xFF, 0x10 ,0));
+		
+		String padding = "000";
+		if (score > 9) padding = "00";
+		if (score > 99) padding = "0";
+		
+		s.setFont(new Font("Times New Roman", Font.BOLD, 28));
+		s.drawString(padding + score,imgScore.getWidth()/2, imgScore.getHeight()/2);
+		s.dispose();
+		
+	}
+	
+	@Override
+	public void start() throws Exception
+	{
+		super.start();
+		
+		// create background image
+		background = new SceneObject(renderBackground(), 0, 0);
 		sceneObjects.add(background);
 		
-		///// Creating the cather object
+		///// Creating the bubble popper object
+		int bubblePopperW = 110, bubblePopperH = 14;
+		int x = (maxWidth - bubblePopperW) / 2;
+		int y = 0;
+		BufferedImage imgCatcher = renderBubblePopper(bubblePopperW, bubblePopperH);
 		
-		int catcherW = 110, catcherH = 14;
-		int x = (maxWidth - catcherW) / 2;
-		int y = 0; //maxHeight - catherH / 2;
-		BufferedImage imgCatcher = renderCatcher(x, y, catcherW, catcherH);
+		bubblePopper = new SceneObject(imgCatcher, x, y);
+		sceneObjects.add(bubblePopper);
 		
-		catcher = new SceneObject(imgCatcher, x, y);
-		sceneObjects.add(catcher);
+		///// Creates the score at the bottom of the screen
+		int scoreBox = 150;
+		scoreDisplay = new SceneObject(new BufferedImage(scoreBox, scoreBox, BufferedImage.TYPE_INT_ARGB),
+										maxWidth - scoreBox, maxHeight - scoreBox);
+		sceneObjects.add(scoreDisplay);
+		score(0);
+	}	
 
-	}
-	
-	private void moveCatcher(int amplitude)
+	// game AI
+	private void bubblePopperAI()
 	{
-		amplitude = rng.nextInt(amplitude * 2) - amplitude;
-	
-		catcher.moveBy(amplitude, 0);
+		// don't move if we can't see any bubbles
+		if (sceneObjects.size() <= 3) return;
 		
-		if (catcher.getX() < 0 || catcher.getX() + catcher.getImage().getWidth() > maxWidth)
-			amplitude *= -2;
+		int minDistance = this.maxHeight;
+		SceneObject target = null;
+		
+		// find the object closest to the border
+		for (SceneObject bubble: sceneObjects) {
+			int distance = bubble.getY();
+
+			if (bubble.tag(REMOVABLE) && distance < minDistance)
+			{
+				minDistance = distance;
+				target = bubble;
+			}
+		}
+		
+		// marks this target bubble with an 'X'
+		markTarget(target);
 	
-		catcher.moveBy(amplitude, 0);
+		// movement calculation
+		int acceleration = target.getX() - bubblePopper.getX() - bubblePopper.getImage().getWidth()/2;
+		velocity += acceleration;
+		velocity %= 10 + sceneObjects.size();
+		bubblePopper.moveBy(velocity, 0);
+		
+		// collision detection
+		int bubbleCenterX = (target.getX() - target.getImage().getWidth()/2);
+		int catcherBase = bubblePopper.getY() + bubblePopper.getImage().getHeight();
+		
+		// conditional object removal
+		if (target.getY() <= catcherBase &&
+			bubbleCenterX > bubblePopper.getX() &&
+			bubbleCenterX < bubblePopper.getX() + bubblePopper.getImage().getWidth() )
+		{
+			sceneObjects.remove(target);
+			score(-10);
+		}
 	}
-	
+
 	@Override
 	public boolean update() {
 		
 		// is the game running ?
 		if (!super.update()) return false;
 		
+		//bubblePopper.moveBy(0, 1);
+		
 		for (SceneObject bubble: sceneObjects)
 		{
-
-			// move everything but the catcher and background
-			if (bubble.getZIndex() != background.getZIndex() &&
-				bubble.getZIndex() != catcher.getZIndex())
+			// move everything up except for the popper and background
+			if (bubble.tag(REMOVABLE)) {
 				bubble.moveBy(0, -1);
-			
-			int bubbleCenterX = (bubble.getX() - bubble.getImage().getWidth()/2);
-			//int bubbleCenterY = (bubble.getY() + bubble.getImage().getHeight()/2);
-			int catcherBase = catcher.getY() + catcher.getImage().getHeight();
-			
-			if (bubble.getY() <= catcherBase &&
-				bubbleCenterX > catcher.getX() &&
-				bubbleCenterX < catcher.getX() + catcher.getImage().getWidth() )
-			{
-				sceneObjects.remove(bubble);
-				score -= 10;
-				debug("SCORE: " + score);
-				break;
+
+				// tracks points
+				if (bubble.getY() < 0) {
+					sceneObjects.remove(bubble);
+					score(10);
+					break;
+				}
 			}
-			
-			if (bubble.getY() < 0) {
-				sceneObjects.remove(bubble);
-				score += 10;
-				debug("SCORE: " + score);
-				break;
-			}
+				
 		}
-		moveCatcher(30);
+		// run the A.I.
+		bubblePopperAI();
 		
 		// process mouse events
 		MouseEvent mouse = ioDevice.getMouse();
@@ -165,21 +241,25 @@ public class TestFrameWork extends GameClassic {
 		int x = mouse.getX();
 		int y = mouse.getY();
 		
-		switch (mouse.getButton()) {
+		switch (mouse.getButton())
+		{
 		case 1:
-			int size = 35;
-			x -= size /2;
-			y -= size /2;
+		
+			// Adds new bubbles
+			x -= bubbleSize /2;
+			y -= bubbleSize /2;
+			SceneObject newObj = new SceneObject(renderBubble(x, y), x, y);
+			newObj.setTag(REMOVABLE);
 			
-			sceneObjects.add(new SceneObject(renderBubble(x, y, size), x, y));
+			sceneObjects.add(newObj);
 			break;
 			
 		case 3:
-			debug("BUTTON: "+ mouse.getButton());
+			
+			// Removes bubbles
 			SceneObject target = getAffectedObject(x, y);
 			
-			// FIXME: Should not have to check for background removal
-			if (target != null && target.getZIndex() != background.getZIndex())
+			if (target != null && target.tag(REMOVABLE))
 				sceneObjects.remove(target);
 			break;
 		}
