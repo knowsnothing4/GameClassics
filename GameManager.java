@@ -139,6 +139,34 @@ public class GameManager extends JFrame implements Runnable, ActionListener, Key
 		JMenuItem item = (JMenuItem) selectedMenuItem.getSource();
 		//JOptionPane.showMessageDialog(null, item.getActionCommand());
 		
+		for (GameList title: GameList.values()) {
+			if (title.getName().equals(item.getActionCommand())) {
+	
+				if (activeGame != null) {
+					try {
+						activeGame.stop();
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
+				
+				activeGame = title.getGame();
+				screen.setScreenController(activeGame);
+				
+				try {
+					activeGame.start();
+					this.setTitle("ACTIVE:"+ title.getName() +" | SCORE: " +activeGame.getScore());
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}		
+		
+				break;
+			}
+		}
+		
+		/*
 		if (item.getActionCommand().equals(GameList.TestFramework.getName())) {
 			
 			activeGame = GameList.TestFramework.getGame();
@@ -151,8 +179,8 @@ public class GameManager extends JFrame implements Runnable, ActionListener, Key
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
 		}
+		*/
 		
 	}
 	
