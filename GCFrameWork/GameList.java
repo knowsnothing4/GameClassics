@@ -1,4 +1,7 @@
-package GameClassics;
+package GCFrameWork;
+
+import GameClassics.TestFrameWork;
+import GameClassics.TicTacToe;
 
 public enum GameList {
 	

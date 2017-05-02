@@ -1,4 +1,4 @@
-package GameClassics;
+package GCFrameWork;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -25,7 +25,7 @@ public abstract class GameClassic {
 	protected BufferedImage screen;
 	protected Graphics screenGraphics;
 	protected Queue<SceneObject> sceneObjects;
-	protected GameScreen ioDevice;
+	protected GameIODevice ioDevice;
 	
 	protected long score;
 	private boolean running;
@@ -78,7 +78,7 @@ public abstract class GameClassic {
 		return rng.nextInt(max - min) + min;
 	}
 	
-	public void setIODevice(GameScreen gs)
+	public void setIODevice(GameIODevice gs)
 	{
 		this.ioDevice = gs;
 		sceneObjects.clear();
@@ -101,7 +101,6 @@ public abstract class GameClassic {
 	
 		return affectedObject;
 	}
-	
 	
 	public long getScore()
 	{
@@ -140,7 +139,7 @@ public abstract class GameClassic {
 				fields[1] = score + "";
 			}
 			
-			cfgFile.write(fields[0] +" : "+ fields[1] + "\n");
+			cfgFile.write(fields[0].trim() +" : "+ fields[1] + "\n");
 		}
 		
 		cfgFile.close();

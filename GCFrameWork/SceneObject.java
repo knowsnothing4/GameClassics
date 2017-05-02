@@ -1,6 +1,11 @@
-package GameClassics;
+package GCFrameWork;
 
+import java.awt.Font;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.font.FontRenderContext;
+import java.awt.geom.Rectangle2D;
 
 /*
  * Pretty powerful class that stores images (transparency supported) as well
@@ -18,170 +23,199 @@ import java.awt.image.BufferedImage;
 
 public class SceneObject {
 
-	private static long imageId = 0;		// unique "hash" for every image-object created
-	private long imageZOrder;					
-	
-	private BufferedImage image;			// the image itself
-	private boolean visible, needUpdate;	// should this image be drawn ?
-	
-	private int xpos, ypos;					// (x,y) where this image should be rendered
-	private double collisionRadius;			// outer circular collision box radius (first check)
-	
-	private String tag;
-	
-	public SceneObject(BufferedImage image) {
-		this(image, 0, 0);
-	}
-	
+	private static long imageId = 0; // unique "hash" for every image-object
+										// created
+	private long imageZOrder;
+
+	private BufferedImage image; // the image itself
+	private boolean visible, needUpdate; // should this image be drawn ?
+
+	private int xpos, ypos; // (x,y) where this image should be rendered
+	private int tag;
+	private int alphaMask;
+
 	public SceneObject(BufferedImage image, int x, int y) {
-	
+
 		this.imageZOrder = imageId++;
 		this.xpos = x;
 		this.ypos = y;
 		this.image = image;
 		this.visible = true;
-		this.needUpdate = true;	// this will be set to true the first time.
-		this.tag = "";
-		
-		collisionRadius = pythagoras(image.getWidth(), image.getHeight()) * 0.5;
+		this.needUpdate = true; // this will be set to true the first time.
+		this.alphaMask = 0xFF000000;
+		this.tag = -1;
 	}
 
-	protected void setTag(String tag)
+	public SceneObject(String text, Font font, int x, int y)
 	{
+		this(null, x, y);
+		 
+		FontRenderContext frc = new FontRenderContext(	null,
+													RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT,
+													RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT);
+		Rectangle2D box = font.getStringBounds(text, frc);
+		final int padding = 2;
+		BufferedImage textBox = new BufferedImage(	(int) box.getWidth() + padding,
+													(int) box.getHeight() + padding,
+													BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = textBox.createGraphics();
+		g.setFont(font);
+		// FIXME: I don't think 0 0 will work
+		g.drawString(text, 0, 0);
+		g.dispose();
+		
+		this.image = textBox;
+	}
+
+	public float getAlpha() {
+		float alpha = (float) (alphaMask >> 24);
+		return alpha / 255;
+	}
+
+	public void setAlpha(float alpha) {
+		if (alpha < 0 || alpha > 1)
+			return;
+
+		// convert [0.0, 1.0] into [0, 255] and compute mask
+		// based on ARGB signed integer format
+		alphaMask = ((int) (alpha * 255)) << 24;
+
+		for (int i = 0; i < image.getWidth(); i++) {
+			for (int j = 0; j < image.getHeight(); j++) {
+				// erase old mask
+				int newPixel = image.getRGB(i, j);
+
+				// apply new mask
+				if (newPixel != 0)
+					image.setRGB(i, j, newPixel & 0x00FFFFFF | alphaMask);
+			}
+		}
+	}
+
+	public void setTag(int tag) {
 		this.tag = tag;
 	}
-	
-	protected boolean tag(String tag)
-	{
-		return (this.tag.equals(tag));
+
+	public int getTag() {
+		return this.tag;
 	}
-	
-	
+
 	// scene objects won't be drawn twice if they don't update
 	// by changing their internal image or moving.
-	public boolean needUpdate()
-	{
+	public boolean needUpdate() {
 		return needUpdate;
 	}
-	
-	public void update()
-	{
+
+	public void update() {
 		needUpdate = !needUpdate;
 	}
-	
-	public boolean hit(int x, int y)
-	{
+
+	public boolean hit(int x, int y) {
 		// FIXME: Can we hit hidden objects ?
-		
+
 		// calculate relative coordinates
 		x -= xpos;
 		y -= ypos;
 
 		// check if the coordinates are inside the image
-		if (x < 0 || y < 0 || x > image.getWidth() || y > image.getHeight()) return false;
+		if (x < 0 || y < 0 || x > image.getWidth() || y > image.getHeight())
+			return false;
 
 		// check if this point is transparent
-		return ( (image.getRGB(x, y) & 0xFF000000) == 0xFF000000);
+		return ((image.getRGB(x, y) & 0xFF000000) != 0);
 
 	}
-	
-	public boolean collide(final SceneObject sObj)
-	{
+
+	public boolean collide(final SceneObject sObj) {
 		// FIXME: Should it check whether both objects are visible ?
-		double distance = pythagoras(this.xpos - sObj.xpos, this.ypos - sObj.ypos);
-		
-		// circular radius check
-		if (distance > this.collisionRadius + sObj.collisionRadius) return false;
-		
+
 		// bounding box intersection check
-		Rectangle r1 = new Rectangle(	this.xpos,
-										this.ypos,
-										this.image.getWidth(),
-										this.image.getHeight()
-									);
-		
-		Rectangle r2 = new Rectangle(	sObj.xpos,
-										sObj.ypos,
-										sObj.image.getWidth(),
-										sObj.image.getWidth()
-									);
-		
-		if (!r1.intersects(r2)) return false;
-		
+		Rectangle r1 = new Rectangle(this.xpos, this.ypos, this.image.getWidth(), this.image.getHeight());
+
+		Rectangle r2 = new Rectangle(sObj.xpos, sObj.ypos, sObj.image.getWidth(), sObj.image.getHeight());
+		// bounding box collision check
+		if (!r1.intersects(r2))
+			return false;
+
 		// transparency intersection check
-		// TODO: Intersection transparency check
-		
-		
-		
+		Rectangle region = r1.intersection(r2);
+
+		for (int i = region.x; i < region.x + region.width; i++) {
+			for (int j = region.y; j < region.y + region.height; j++) {
+				int r1i = i - this.xpos, r1j = j - this.ypos;
+				int r2i = i - sObj.xpos, r2j = j - sObj.ypos;
+
+				int pixel1 = this.image.getRGB(r1i, r1j) & 0xFF000000;
+				int pixel2 = sObj.image.getRGB(r2i, r2j) & 0xFF000000;
+
+				// if (pixel1 == 0xFF000000 && pixel2 == 0xFF000000) {
+				if (pixel1 != 0 && pixel2 != 0) {
+					return true;
+				}
+			}
+		}
+
 		return false;
-		
+
 	}
 
-	public void moveTo(int x, int y)
-	{
+	public void moveTo(int x, int y) {
 		// FIXME: Is the consistency check necessary ?
 		// might lead hard-to-track bugs.
-		if (x < 0 || y < 0) return;
-		
+		if (x < 0 || y < 0)
+			return;
+
 		this.xpos = x;
 		this.ypos = y;
-		
+
 		needUpdate = true;
 	}
-	
-	public void moveBy(int dx, int dy)
-	{
+
+	public void moveBy(int dx, int dy) {
 		this.xpos += dx;
 		this.ypos += dy;
+
 		needUpdate = true;
 	}
-	
-	public int getX()
-	{
+
+	public int getX() {
 		return this.xpos;
 	}
-	
-	public int getY()
-	{
+
+	public int getY() {
 		return this.ypos;
 	}
-	
 
-	public BufferedImage getImage()
-	{
+	public int getWidth() {
+		return image.getWidth();
+	}
+
+	public int getHeight() {
+		return image.getHeight();
+	}
+
+	public BufferedImage getImage() {
 		return this.image;
 	}
-	
-	// in case you need to keep track of this specific image.
 
-	public final long getZIndex()
-	{
+	// in case you need to keep track of this specific image.
+	public final long getZIndex() {
 		return this.imageZOrder;
 	}
-	
+
 	// visibility control allows methods to decide when to draw this object
-	
-	public void hide()
-	{
+	public void hide() {
 		visible = false;
-		needUpdate = false;	// FIXME: Is it really false ?
+		needUpdate = false; // FIXME: Is it really false ?
 	}
-	
-	public void show()
-	{
+
+	public void show() {
 		visible = true;
 		needUpdate = true;
 	}
-	
-	public final boolean isVisible()
-	{
+
+	public final boolean isVisible() {
 		return visible;
 	}
 
-	//// AUX
-	private static final double pythagoras(int b, int c)
-	{
-		return Math.sqrt(b*b + c*c);
-	}
-	
 }
