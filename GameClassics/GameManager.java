@@ -1,3 +1,4 @@
+package GameClassics;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -8,13 +9,17 @@ import java.awt.event.KeyListener;
 import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
+
+import GCFrameWork.GameClassic;
+import GCFrameWork.GameList;
+import GCFrameWork.GameIODevice;
+
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
-import GameClassics.*;
 
 public class GameManager extends JFrame implements Runnable, ActionListener, KeyListener {
 
@@ -32,7 +37,7 @@ public class GameManager extends JFrame implements Runnable, ActionListener, Key
 	
 	private JMenuBar menuBar;
 	
-	private static GameScreen screen;
+	private static GameIODevice screen;
 	private static GameClassic activeGame;
 	
 	public int updateDelay;
@@ -86,7 +91,7 @@ public class GameManager extends JFrame implements Runnable, ActionListener, Key
 		createMenu();
 		
 		setFPS(20);
-		screen = new GameScreen(windowDimension);
+		screen = new GameIODevice(windowDimension);
 		add(screen, BorderLayout.CENTER);
 		
 		pack();
@@ -137,7 +142,6 @@ public class GameManager extends JFrame implements Runnable, ActionListener, Key
 	public void actionPerformed(ActionEvent selectedMenuItem) {
 		
 		JMenuItem item = (JMenuItem) selectedMenuItem.getSource();
-		//JOptionPane.showMessageDialog(null, item.getActionCommand());
 		
 		for (GameList title: GameList.values()) {
 			if (title.getName().equals(item.getActionCommand())) {
@@ -165,23 +169,7 @@ public class GameManager extends JFrame implements Runnable, ActionListener, Key
 				break;
 			}
 		}
-		
-		/*
-		if (item.getActionCommand().equals(GameList.TestFramework.getName())) {
 			
-			activeGame = GameList.TestFramework.getGame();
-			screen.setScreenController(activeGame);
-			
-			try {
-				activeGame.start();
-				this.setTitle("ACTIVE: TEST FRAMEWORK | SCORE: " +activeGame.getScore());
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		*/
-		
 	}
 	
 	///////////// UNUSED FUNCTIONS

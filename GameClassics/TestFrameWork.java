@@ -7,6 +7,9 @@ import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
+import GCFrameWork.GameClassic;
+import GCFrameWork.SceneObject;
+
 /*
  * A game that tests the framework's ability to handle mouse clicks, 
  * object inclusion, removal and tracking.
@@ -26,7 +29,7 @@ public class TestFrameWork extends GameClassic {
 	private SceneObject background, bubblePopper, scoreDisplay;
 	private int velocity;
 	private static final int bubbleSize = 35;
-	private static final String REMOVABLE = "REMOVABLE";
+	private static final int REMOVABLE = 1;
 	
 	public TestFrameWork() {
 		super("Test FrameWork", 800, 600);
@@ -179,7 +182,7 @@ public class TestFrameWork extends GameClassic {
 		for (SceneObject bubble: sceneObjects) {
 			int distance = bubble.getY();
 
-			if (bubble.tag(REMOVABLE) && distance < minDistance)
+			if (bubble.getTag() == REMOVABLE && distance < minDistance)
 			{
 				minDistance = distance;
 				target = bubble;
@@ -190,23 +193,19 @@ public class TestFrameWork extends GameClassic {
 		markTarget(target);
 	
 		// movement calculation
-		int acceleration = target.getX() - bubblePopper.getX() - bubblePopper.getImage().getWidth()/2;
+		int bw = bubblePopper.getImage().getWidth()/2;
+		int tw = target.getImage().getWidth()/2;
+		int acceleration = (target.getX() + tw) - (bubblePopper.getX() + bw);
 		velocity += acceleration;
 		velocity %= 10 + sceneObjects.size();
 		bubblePopper.moveBy(velocity, 0);
-		
+			
 		// collision detection
-		int bubbleCenterX = (target.getX() - target.getImage().getWidth()/2);
-		int catcherBase = bubblePopper.getY() + bubblePopper.getImage().getHeight();
-		
-		// conditional object removal
-		if (target.getY() <= catcherBase &&
-			bubbleCenterX > bubblePopper.getX() &&
-			bubbleCenterX < bubblePopper.getX() + bubblePopper.getImage().getWidth() )
-		{
+		if (minDistance < 5 && bubblePopper.collide(target)) {
 			sceneObjects.remove(target);
 			score(-10);
 		}
+	
 	}
 
 	@Override
@@ -215,12 +214,10 @@ public class TestFrameWork extends GameClassic {
 		// is the game running ?
 		if (!super.update()) return false;
 		
-		//bubblePopper.moveBy(0, 1);
-		
 		for (SceneObject bubble: sceneObjects)
 		{
 			// move everything up except for the popper and background
-			if (bubble.tag(REMOVABLE)) {
+			if (bubble.getTag() == REMOVABLE) {
 				bubble.moveBy(0, -1);
 
 				// tracks points
@@ -259,7 +256,7 @@ public class TestFrameWork extends GameClassic {
 			// Removes bubbles
 			SceneObject target = getAffectedObject(x, y);
 			
-			if (target != null && target.tag(REMOVABLE))
+			if (target != null && target.getTag() == REMOVABLE)
 				sceneObjects.remove(target);
 			break;
 		}
