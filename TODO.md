@@ -1,7 +1,11 @@
 # Todo
-* Implement a kind of dynamic BSP-Tree to make collision detection between SceneObjects more efficient.
-* Create an "Exit" menu option
-* Handle the stop for GameClassic objects. So they can save scores and switch games.
-* Create textures and include them in the .jar file
-* Pick a first game and implement it using the engine.
-* Make a super cool and simple to use built-in sound engine!
+
+- Finish TicTacToe.
+- Make the game run on a separate thread so it can't lock up the manager when bugs occur.
+- Test the new text rendering objects.
+- Create an "Exit" menu option to close the program properly.
+- Create textures and include them in the .jar file
+- Make a default game manager screen that appears when you close/save a game.
+- Use darken/transparent thing on the screen when games are paused.
+- Implement a kind of dynamic BSP-Tree to make collision detection between SceneObjects more efficient.
+- Make a super cool and simple to use built-in sound engine!
