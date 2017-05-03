@@ -1,5 +1,6 @@
 package GCFrameWork;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -46,7 +47,7 @@ public class SceneObject {
 		this.tag = -1;
 	}
 
-	public SceneObject(String text, Font font, int x, int y)
+	public SceneObject(String text, Font font, Color color, int x, int y)
 	{
 		this(null, x, y);
 		 
@@ -55,24 +56,42 @@ public class SceneObject {
 													RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT);
 		Rectangle2D box = font.getStringBounds(text, frc);
 		final int padding = 2;
-		BufferedImage textBox = new BufferedImage(	(int) box.getWidth() + padding,
-													(int) box.getHeight() + padding,
+		BufferedImage textBox = new BufferedImage(	(int) box.getWidth() + padding*2,
+													(int) box.getHeight() + padding*2,
 													BufferedImage.TYPE_INT_ARGB);
+		//BufferedImage textBox = new BufferedImage(100, 50, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = textBox.createGraphics();
 		g.setFont(font);
+		g.setColor(color);
+		
 		// FIXME: I don't think 0 0 will work
-		g.drawString(text, 0, 0);
+		g.drawString(text, padding, ((int) box.getHeight()) -padding*2);
+		
+		// debug
+		//g.drawRect(0, 0, textBox.getWidth()-1, textBox.getHeight()-1);
 		g.dispose();
 		
 		this.image = textBox;
 	}
 
 	public float getAlpha() {
-		float alpha = (float) (alphaMask >> 24);
-		return alpha / 255;
+		int alpha = (alphaMask >> 24) & 0xFF;
+		return ((float) alpha) / 0xFF;
+		//return alpha / 255;
+		//System.out.print("\nMASK>>24 = " + ((alphaMask>>24) & 0xff) );
+		//return ((float) alphaMask) / 0xff000000;
+		
 	}
 
-	public void setAlpha(float alpha) {
+	public void setAlpha(float alpha) 
+	{
+		/*
+		 * @alpha: Value between 0.0 and 1.0 that represents
+		 * a percentage of transparency. 
+		 * 
+		 * FIXME: This function will destroy the original alpha values
+		 * of the image so it might be redesigned in the future.
+		 */
 		if (alpha < 0 || alpha > 1)
 			return;
 

@@ -7,9 +7,9 @@ public enum GameList {
 	
 	TestFramework	("Framework Tester", new TestFrameWork()),
 	TicTacToe 		("Tic Tac Toe", new TicTacToe()),
+	Snake			("Snake", null),
 	Tetris			("Tetris", null),
 	MineSweeper		("Mine Sweeper", null),
-	Snake			("Snake", null),
 	BreakOut		("Break Out", null),
 	GoogleDinossaur	("Google Dinoussaur", null),
 	Ludo 			("Ludo", null),
