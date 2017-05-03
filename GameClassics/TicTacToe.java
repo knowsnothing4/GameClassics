@@ -1,9 +1,11 @@
 package GameClassics;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.util.List;
 
 import javax.swing.JOptionPane;
 
@@ -17,10 +19,25 @@ public class TicTacToe extends GameClassic {
 	private long baseIndex; // maps clicks to board matric position
 	private BufferedImage xMark, oMark; // X and O's textures
 	private int[][] map; // Game's logic map
+	private SceneObject titleDisplay;
 
-	private enum tttLogic {
-		row, column, diagonal, win, lose, draw, any
-	}
+	private static final String[] blockMessages = {
+			"Nope.",
+			"Get blocked!",
+			"Hmmm... no.",
+			"Try again!",
+			"Nice try.",
+			"Not this way.",
+			"Not so easy, huh?",
+			"Not so fast!",
+			"What?",
+			"Ha ha ha!",
+			"Think again!",
+			"How am I playing ?",
+			"Oh oh...",
+			":-)",
+	};
+	
 
 	public TicTacToe() {
 		// super("Tic Tac Toe", 600, 480);
@@ -37,17 +54,16 @@ public class TicTacToe extends GameClassic {
 		bg2d.clearRect(0, 0, maxWidth, maxWidth);
 
 		// outline
-		int margin = 4;
+		int margin = 8;
 		bg2d.setColor(new Color(0x10, 0x00, 0x00));
-		bg2d.drawRoundRect(margin, margin, maxWidth - 2 * margin, maxHeight - 2 * margin, margin, margin);
+		bg2d.drawRoundRect(margin, margin, maxWidth - 3 * margin, maxHeight - 9 * margin, margin, margin);
 
 		// "Grid"
 		int offset = maxWidth / 8;
 		bg2d.setColor(new Color(0x10, 0x10, 0xff));
 		bg2d.fillRect(offset, offset, maxWidth - 2 * offset, maxHeight - 2 * offset);
-
 		bg2d.dispose();
-
+		
 		return bg;
 	}
 
@@ -76,8 +92,6 @@ public class TicTacToe extends GameClassic {
 		int thickness = 5;
 		int dirFix = 30;
 		markg.setColor(new Color(0xff, 0, 0));
-		// markg.drawLine(0, 0, w, h);
-		// markg.drawLine(0, h, w, 0);
 		markg.rotate(Math.PI / 4, w / 2, h / 2);
 		markg.fillRect(dirFix, h / 2 - thickness, w - dirFix * 2, 2 * thickness);
 		markg.fillRect(w / 2 - thickness, 0, 2 * thickness, h);
@@ -119,8 +133,6 @@ public class TicTacToe extends GameClassic {
 
 				gridItem.setTag(GRID);
 				sceneObjects.add(gridItem);
-				// JOptionPane.showMessageDialog(null, "INDEX "+ (i*3 +j));
-
 			}
 		}
 
@@ -142,146 +154,200 @@ public class TicTacToe extends GameClassic {
 		}
 	}
 
-	private int markFreeSpot(int line, tttLogic type) {
-		int i = -1;
-		int j = -1;
-
-		for (int k = 0; k < 3 && i == -1; k++) {
-			switch (type) {
-			case row:
-				debug("Blocking Row " + line);
-				if (map[line][k] == 0) {
-					i = line;
-					j = k;
-				}
-				break;
-			case column:
-				debug("Blocking Column " + line);
-				if (map[k][line] == 0) {
-					i = k;
-					j = line;
-				}
-				break;
-			case diagonal:
-				debug("Blocking Dig " + line);
-				if (line == 0 && map[k][k] == 0) {
-					i = k;
-					j = k;
-				}
-				if (line == 2 && map[2 - k][k] == 0) {
-					i = 2 - k;
-					j = k;
-				}
-				break;
-			case any:
-				debug("Filling any spot");
-				if (map[1][1] == 0) {
-					i = j = 1;
-				} else {
-					for (int q = 0; q < 3; q++) {
-						if (map[k][q] == 0) {
-							i = k;
-							j = q;
-							break;
-						}
-					}
-				}
-				break;
-			}
-		}
+	// When any of the rows/columns/diagonals sums up to |2|
+	// it means we have a strategic decision to make.
+	// 0 0 0 = 0
+	// 0 0 1 = 1
+	// 0 0 -1 = -1
+	// 0 1 0 = 1
+	// 0 1 1 = 2 -> Must block
+	// 0 1 -1 = 0
+	// 0 -1 0 = -1
+	// 0 -1 1 = 0
+	// 0 -1 -1 = -2 -> Must win
+	
+	// 1 0 0 = 1
+	// 1 0 1 = 2 -> Must block
+	// 1 0 -1 = 0
+	// 1 1 0 = 2 -> Must block
+	// 1 1 1 = 3 -> Player wins
+	// 1 1 -1 = 1
+	// 1 -1 0 = 0
+	// 1 -1 1 = 1
+	// 1 -1 -1 = -1
+	
+	// -1 0 0 = -1
+	// -1 0 1 = 0
+	// -1 0 -1 = -2 -> Must win
+	// -1 1 0 = 0
+	// -1 1 1 = 1
+	// -1 1 -1 = -1
+	// -1 -1 0 = -2 -> Must win
+	// -1 -1 1 = -1
+	// -1 -1 -1 = -3 -> A.I. wins
+	private void newAI()
+	{
+		int[][][] sequences = {
+				{{0,0}, {1,1}, {2,2}},	// diagonals	
+				{{2,0}, {1,1}, {0,2}},
+				{{0,0}, {0,1}, {0,2}},	// rows
+				{{1,0}, {1,1}, {1,2}},
+				{{2,0}, {2,1}, {2,2}},
+				{{0,0}, {1,0}, {2,0}},	// columns
+				{{0,1}, {1,1}, {2,1}},
+				{{0,2}, {1,2}, {2,2}}
+		};
 		
-		if (i < 0) return -1;
-		map[i][j] = -1;
-
+		int[] bestSpot = null;
+		
 		// debug
 		showMap();
 		
+		for (int s = 0; s < 8; s++) {
+			
+			int sum = 0;
+			int[] blankSpot = null;
+			for (int k = 0; k < 3; k++) {
+				int i = sequences[s][k][0];
+				int j = sequences[s][k][1];
+				
+				// found a blank spot ?
+				if (map[i][j] == 0) {
+					blankSpot = sequences[s][k];
+					if (bestSpot == null) bestSpot = blankSpot;
+				} else {
+					sum += map[i][j];
+				}
+			}
+			
+			// prioritize winning
+			if (sum == -2) {
+				displayTitle("You lose", Color.gray, 0.9f);
+				//strike(s);
+				this.pause();
+				bestSpot = blankSpot;
+				break;
+			}
+			
+			// need blocking
+			if (sum == 2) {
+				int msg = rand(0, blockMessages.length);
+				displayTitle(blockMessages[msg], Color.ORANGE, 0.9f);
+				bestSpot = blankSpot;
+			}
+			
+		}
+		
+		int i = bestSpot[0];
+		int j = bestSpot[1];
+		map[i][j] = -1;
+	
 		// do graphical stuff with the matrix
-		long index = i * 3 + j + baseIndex;
-
+		SceneObject cell = getCell(i, j);
+		int x = cell.getX();
+		int y = cell.getY();
+		sceneObjects.add(new SceneObject(oMark, x, y));
+			
+	}
+	
+	private SceneObject getCell(int i, int j)
+	{
+		SceneObject cell = null;
+		long zIndex = i * 3 + j + baseIndex;
 		for (SceneObject target : sceneObjects) {
-			if (target.getZIndex() == index) {
-				int x = target.getX();
-				int y = target.getY();
-				sceneObjects.add(new SceneObject(oMark, x, y));
+			if (target.getZIndex() == zIndex) {
+				cell = target;
 				break;
 			}
 		}
-		return 0;
+		return cell;
 	}
-
-	private int tttAI() {
-
-		for (int i = 0; i < 3; i++) {
-
-			// diaSum += map[i][i];
-			int diaSum = 0;
-			int rowSum = 0;
-			int colSum = 0;
-			for (int j = 0; j < 3; j++) {
-				rowSum += map[i][j];
-				colSum += map[j][i];
-				if (i != 1) {
-					
-					// This equation works for both diagonals
-					// 00 11 22
-					// 20 11 02
-					int z = i + (1 - i) * j;
-					diaSum += map[z][j];
-				}
-			}
-
-			// When any of the rows/columns/diagonals sums up to |2|
-			// it means we have a strategic decision to make.
-			// 0 0 0 = 0
-			// 0 0 1 = 1
-			// 0 0 -1 = -1
-			// 0 1 0 = 1
-			// 0 1 1 = 2 -> Must block
-			// 0 1 -1 = 0
-			// 0 -1 0 = -1
-			// 0 -1 1 = 0
-			// 0 -1 -1 = -2 -> Must win
-
-			// 1 0 0 = 1
-			// 1 0 1 = 2 -> Must block
-			// 1 0 -1 = 0
-			// 1 1 0 = 2 -> Must block
-			// 1 1 1 = 3 -> Player wins
-			// 1 1 -1 = 1
-			// 1 -1 0 = 0
-			// 1 -1 1 = 1
-			// 1 -1 -1 = -1
-
-			// -1 0 0 = -1
-			// -1 0 1 = 0
-			// -1 0 -1 = -2 -> Must win
-			// -1 1 0 = 0
-			// -1 1 1 = 1
-			// -1 1 -1 = -1
-			// -1 -1 0 = -2 -> Must win
-			// -1 -1 1 = -1
-			// -1 -1 -1 = -3 -> A.I. wins
-
-			// prioritize wins
-			if (diaSum == -2)
-				return markFreeSpot(i, tttLogic.diagonal);
-			if (rowSum == -2)
-				return markFreeSpot(i, tttLogic.row);
-			if (colSum == -2)
-				return markFreeSpot(i, tttLogic.column);
-
-			// watch for blocks
-			if (diaSum == 2)
-				return markFreeSpot(i, tttLogic.diagonal);
-			if (rowSum == 2)
-				return markFreeSpot(i, tttLogic.row);
-			if (colSum == 2)
-				return markFreeSpot(i, tttLogic.column);
+	
+	private void strike(int direction)
+	{
+		// broken. Needs thinking.
+		SceneObject cellA = null, cellB = null;
+		
+		switch(direction) {
+		case 0:
+			// diagonal 1
+			cellA = getCell(0, 0);
+			cellB = getCell(2, 2);
+			break;
+		case 1:
+			// diagonal 2  
+			cellA = getCell(2, 0);
+			cellB = getCell(0, 2);
+			break;
+		case 2:
+			// row 1
+			cellA = getCell(0, 0);
+			cellB = getCell(0, 2);
+			break;
+		case 3:
+			// row 2
+			cellA = getCell(1, 0);
+			cellB = getCell(1, 2);
+			break;
+		case 4:
+			// row 2
+			cellA = getCell(2, 0);
+			cellB = getCell(2, 2);
+			break;
+		case 5:
+			// column 1
+			cellA = getCell(0, 0);
+			cellB = getCell(2, 0);
+			break;
+		case 6:
+			// column 2
+			cellA = getCell(0, 1);
+			cellB = getCell(2, 1);
+			break;
+		case 7:
+			// column 3
+			cellA = getCell(0, 2);
+			cellB = getCell(2, 2);
+			break;
 		}
-		// just find an empty spot and play
-		return markFreeSpot(0, tttLogic.any);
-
+		
+		int x0 = cellA.getX();
+		int y0 = cellA.getY();
+		int x1 = cellB.getX();
+		int y1 = cellB.getY();
+		int w = Math.abs(x1 - x0) + 2;
+		int h = Math.abs(y1 - y0) + 2;
+		int xC = x0 + cellA.getWidth() / 2;
+		int yC = y0 + cellA.getHeight() / 2;
+		
+		BufferedImage line = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D lineG = line.createGraphics();
+		lineG.setColor(Color.BLACK);
+		lineG.drawLine(x1, y1, x0, y0);
+		lineG.dispose();
+		SceneObject strikeLine = new SceneObject(line, xC, yC);
+		sceneObjects.add(strikeLine);
+		JOptionPane.showMessageDialog(null, "X0: "+x0 +" Y0: "+y0 +" X1: "+x1 +" Y1"+y1);
+	}
+	
+	private void displayTitle(String text, Color color, float alpha)
+	{
+		// clear previous title
+		if (this.titleDisplay != null) {
+			sceneObjects.remove(titleDisplay);
+			Graphics2D t = titleDisplay.getImage().createGraphics();
+			t.setColor(Color.white);
+			t.drawRect(0, 0, titleDisplay.getWidth(), titleDisplay.getHeight());
+		}
+		
+		// creates a title
+		Font font = new Font("Helvetica", Font.PLAIN, 36);
+		titleDisplay = new SceneObject(text, font, color, 0, 0);
+		int xTitle = (maxWidth - titleDisplay.getWidth()) /2;
+		titleDisplay.moveTo(xTitle, 8);
+		titleDisplay.setAlpha(alpha);
+		sceneObjects.add(titleDisplay);
+		
 	}
 
 	@Override
@@ -290,6 +356,8 @@ public class TicTacToe extends GameClassic {
 
 		sceneObjects.add(new SceneObject(createBackground(), 0, 0));
 		createGrid();
+		
+		displayTitle("Tic Tac Toe", new Color(80, 20, 0), 0.1f);
 
 		resetMap();
 	}
@@ -315,7 +383,8 @@ public class TicTacToe extends GameClassic {
 			int index = (int) (cell.getZIndex() - baseIndex);
 
 			map[index / 3][index % 3] = 1;
-			tttAI();
+			newAI();
+			//tttAI();
 		}
 
 		return true;

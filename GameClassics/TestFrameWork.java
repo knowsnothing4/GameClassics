@@ -6,6 +6,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.util.LinkedList;
 
 import GCFrameWork.GameClassic;
 import GCFrameWork.SceneObject;
@@ -30,6 +31,7 @@ public class TestFrameWork extends GameClassic {
 	private int velocity;
 	private static final int bubbleSize = 35;
 	private static final int REMOVABLE = 1;
+	private static final int SCOREPOP = 2;
 	
 	public TestFrameWork() {
 		super("Test FrameWork", 800, 600);
@@ -116,8 +118,46 @@ public class TestFrameWork extends GameClassic {
 		g.dispose();
 	}
 
+	private void scorePopEffect(int value, int x, int y)
+	{
+		String s= "" + value;
+		if (value > 0) s += "+"; 
 	
-	// Keeps the score valus consistent and prints it on screen 
+		// font setup
+		Font f = new Font("Helvetica", Font.BOLD, 14);
+		
+		// red for negatives, green for postives
+		Color c = (value < 0 ? Color.red:Color.green);
+		
+		SceneObject scorePop = new SceneObject(s, f, c, x, y);
+		scorePop.setTag(SCOREPOP);
+		sceneObjects.add(scorePop);
+	}
+	
+	private void fadeOutPopScores()
+	{
+		final float decayDelta = 0.08f;
+		LinkedList<SceneObject> toRemove = new LinkedList<SceneObject>();
+		
+		for (SceneObject ps : sceneObjects) {
+			
+			if (ps.getTag() == SCOREPOP) {
+				
+				float newAlpha = ps.getAlpha() -decayDelta;
+				
+				if (newAlpha < 0.0) {
+					toRemove.add(ps);
+					break;
+				} else {
+					ps.setAlpha(newAlpha);
+				}
+			}
+		}
+		
+		sceneObjects.removeAll(toRemove);
+	}
+	
+	// Keeps the score values consistent and prints it on screen 
 	private void score(int ds)
 	{
 		this.score += ds;
@@ -128,11 +168,8 @@ public class TestFrameWork extends GameClassic {
 		
 		s.setBackground(new Color(0, 0 ,0 ,0));
 		s.clearRect(0, 0, imgScore.getWidth(), imgScore.getHeight());
-		if (ds >= 0)
-			s.setColor(new Color(0xA0, 0xCF ,0x10));
-		else
-			s.setColor(new Color(0xFF, 0x10 ,0));
-		
+		s.setColor(new Color(0xCF, 0xCF ,0xCF));
+	
 		String padding = "000";
 		if (score > 9) padding = "00";
 		if (score > 99) padding = "0";
@@ -189,12 +226,14 @@ public class TestFrameWork extends GameClassic {
 			}
 		}
 		
+		// CONCURRENCY BUGS ?
+		if (target == null) return;
 		// marks this target bubble with an 'X'
 		markTarget(target);
 	
 		// movement calculation
-		int bw = bubblePopper.getImage().getWidth()/2;
-		int tw = target.getImage().getWidth()/2;
+		int bw = bubblePopper.getWidth()/2;
+		int tw = target.getWidth()/2;
 		int acceleration = (target.getX() + tw) - (bubblePopper.getX() + bw);
 		velocity += acceleration;
 		velocity %= 10 + sceneObjects.size();
@@ -202,6 +241,10 @@ public class TestFrameWork extends GameClassic {
 			
 		// collision detection
 		if (minDistance < 5 && bubblePopper.collide(target)) {
+			
+			int x = target.getX() + target.getWidth() / 2;
+			int y = target.getY() + target.getHeight() / 2;
+			scorePopEffect(-10, x, y);
 			sceneObjects.remove(target);
 			score(-10);
 		}
@@ -223,12 +266,17 @@ public class TestFrameWork extends GameClassic {
 				// tracks points
 				if (bubble.getY() < 0) {
 					sceneObjects.remove(bubble);
+					scorePopEffect(10, bubble.getX(), bubble.getHeight());
 					score(10);
 					break;
 				}
 			}
+			
+			if (bubble.getTag() == SCOREPOP) bubble.moveBy(0, -2); 
 				
 		}
+		
+		fadeOutPopScores();
 		// run the A.I.
 		bubblePopperAI();
 		
@@ -242,6 +290,7 @@ public class TestFrameWork extends GameClassic {
 		{
 		case 1:
 		
+			if (y < bubblePopper.getHeight()) return false;
 			// Adds new bubbles
 			x -= bubbleSize /2;
 			y -= bubbleSize /2;

@@ -90,7 +90,7 @@ public class GameManager extends JFrame implements Runnable, ActionListener, Key
 		
 		createMenu();
 		
-		setFPS(20);
+		setFPS(25);
 		screen = new GameIODevice(windowDimension);
 		add(screen, BorderLayout.CENTER);
 		
