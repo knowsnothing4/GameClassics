@@ -1,13 +1,12 @@
 package GCFrameWork;
 
-import GameClassics.TestFrameWork;
-import GameClassics.TicTacToe;
+import GameClassics.*;
 
 public enum GameList {
 	
 	TestFramework	("Framework Tester", new TestFrameWork()),
 	TicTacToe 		("Tic Tac Toe", new TicTacToe()),
-	Snake			("Snake", null),
+	Snake			("Snake", new Snake()),
 	Tetris			("Tetris", null),
 	MineSweeper		("Mine Sweeper", null),
 	BreakOut		("Break Out", null),
@@ -15,9 +14,9 @@ public enum GameList {
 	Ludo 			("Ludo", null),
 	Reversi	 		("Reversi", null),
 	Connect4 		("Connect Four", null),
+	Pacman			("Pacman", null),
 	Monopoly 		("Monopoly", null),
-	Pacman 			("Pacman", null),
-	SpaceInvaders 	("Space Invaders", null),
+	PacmeInvaders 	("Space Invaders", null),
 	Game2048 		("2048", null),
 	Sudoku	 		("Sudoku", null),
 	Poker	 		("Texas Hold'em", null),

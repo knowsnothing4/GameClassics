@@ -18,10 +18,12 @@ public abstract class GameClassic {
 
 	protected static final int defaultGameWidth = 800, defaultGameHeight = 600;
 	private static final String cfgFilePath = "GameClassics.cfg";
+	private static final int baseFrameRate = 100;
 	
 	protected String name;
 	protected int maxWidth, maxHeight;
 
+	private int frameRate, frameCounter; 
 	protected BufferedImage screen;
 	protected Graphics screenGraphics;
 	protected Queue<SceneObject> sceneObjects;
@@ -40,6 +42,8 @@ public abstract class GameClassic {
 		this.maxWidth = width;
 		this.maxHeight = height;
 		
+		this.frameCounter = 0;
+		this.frameRate = baseFrameRate;
 		this.screen = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 		this.screenGraphics = screen.createGraphics();
 		sceneObjects =  new LinkedList<SceneObject>();
@@ -84,16 +88,23 @@ public abstract class GameClassic {
 		sceneObjects.clear();
 	}
 	
+	// A weird way of doing things.
+	protected void setFrameRate(int fps)
+	{
+		if (fps > 0) this.frameRate = fps;
+	}
+	
 	protected SceneObject getAffectedObject(int x, int y)
 	{
-		// TODO: Implement efficient space BSP-Tree
+		// TODO: Implement efficient DYNAMIC space BSP-Tree
 		debug("("+ x +","+ y +")");
 		
 		// search for objects
 		long maxZ = 0;
 		SceneObject affectedObject = null;
 		for (SceneObject sObj : sceneObjects) {
-			if (sObj.hit(x, y) && sObj.getZIndex() >= maxZ) {
+			if (sObj.isVisible() && sObj.hit(x, y) && sObj.getZIndex() >= maxZ) {
+			//if (sObj.hit(x, y) && sObj.getZIndex() >= maxZ) {
 				affectedObject = sObj;
 				maxZ = sObj.getZIndex();
 			}
@@ -139,7 +150,7 @@ public abstract class GameClassic {
 				fields[1] = score + "";
 			}
 			
-			cfgFile.write(fields[0].trim() +" : "+ fields[1] + "\n");
+			cfgFile.write(fields[0].trim() +" : "+ fields[1].trim() + "\n");
 		}
 		
 		cfgFile.close();
@@ -161,10 +172,16 @@ public abstract class GameClassic {
 		return screen;
 	}
 
-	public boolean update()
+	public void run()
 	{
-		return running;
+		frameCounter += frameRate;
+		if (frameCounter >= baseFrameRate) {
+			frameCounter -= baseFrameRate ;
+			if (running) update();
+		}
 	}
+	
+	protected abstract void update();
 	
 	public void start() throws Exception {
 		loadScores();
