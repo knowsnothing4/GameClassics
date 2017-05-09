@@ -198,9 +198,8 @@ public class TestFrameWork extends GameClassic {
 	}
 	
 	@Override
-	public void start() throws Exception
+	protected void start()
 	{
-		super.start();
 		
 		// create background image
 		sceneObjects.add(new SceneObject(renderBackground(), 0, 0));
@@ -359,6 +358,11 @@ public class TestFrameWork extends GameClassic {
 			break;
 		}
 		//debug("#NUM_OBJ: "+ sceneObjects.size());
+	}
+
+	@Override
+	protected void stop() {
+		
 	}
 
 }

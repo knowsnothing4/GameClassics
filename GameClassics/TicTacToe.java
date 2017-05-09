@@ -56,7 +56,7 @@ public class TicTacToe extends GameClassic {
 		// outline
 		int margin = 8;
 		bg2d.setColor(new Color(0x10, 0x00, 0x00));
-		bg2d.drawRoundRect(margin, margin, maxWidth - 3 * margin, maxHeight - 9 * margin, margin, margin);
+		bg2d.drawRoundRect(margin, margin, maxWidth - 2 * margin, maxHeight - 2 * margin, margin, margin);
 
 		// "Grid"
 		int offset = maxWidth / 8;
@@ -226,9 +226,8 @@ public class TicTacToe extends GameClassic {
 			// prioritize winning
 			if (sum == -2) {
 				displayTitle("You lose", Color.gray, 0.9f);
-				//strike(s);
-				this.pause();
 				bestSpot = blankSpot;
+				this.stop();
 				break;
 			}
 			
@@ -247,6 +246,7 @@ public class TicTacToe extends GameClassic {
 	
 		// do graphical stuff with the matrix
 		SceneObject cell = getCell(i, j);
+		
 		int x = cell.getX();
 		int y = cell.getY();
 		sceneObjects.add(new SceneObject(oMark, x, y));
@@ -354,9 +354,8 @@ public class TicTacToe extends GameClassic {
 	}
 
 	@Override
-	public void start() throws Exception {
-		super.start();
-
+	protected void start()
+	{
 		sceneObjects.add(new SceneObject(createBackground(), 0, 0));
 		createGrid();
 		
@@ -387,4 +386,10 @@ public class TicTacToe extends GameClassic {
 		}
 		
 	}
+	
+	@Override
+	protected void stop() {
+		running = false;
+	}
+
 }

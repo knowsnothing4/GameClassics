@@ -51,8 +51,7 @@ public class Snake extends GameClassic {
 	}
 	
 	@Override
-	public void start() throws Exception {
-		super.start();
+	protected void start() {
 
 		BufferedImage img = new BufferedImage(maxWidth, maxHeight, BufferedImage.TYPE_INT_ARGB);
 
@@ -64,7 +63,7 @@ public class Snake extends GameClassic {
 		final int tw = maxWidth - gameWidth;
 		final int th = maxHeight - gameHeight;
 		bg2d.setColor(new Color(10, 10, 20));
-		bg2d.fillRect(tw, th, gameWidth - 2*tw, gameHeight - 6*th);
+		bg2d.fillRect(tw, th, gameWidth - tw, gameHeight - th);
 		bg2d.dispose();
 
 		sceneObjects.add(new SceneObject(img, 0, 0));
@@ -80,7 +79,7 @@ public class Snake extends GameClassic {
 		spawnCandy();
 		
 		direction = new Point(0, 0);
-		setFrameRate(20);
+		setFrameRate(25);
 		
 	}
 
@@ -98,6 +97,19 @@ public class Snake extends GameClassic {
 		candy = new SceneObject(renderCandy(c), x, y);
 		sceneObjects.add(candy);
 	}
+
+	private void eat()
+	{
+		// calculate new coordinates because the snake might not be
+		// perfectly aligned with the candy
+		SceneObject head = snake.get(0);
+		int x = head.getX() + direction.x;
+		int y = head.getY() + direction.y;
+		SceneObject newSegment = new SceneObject(head.getImage(), x, y);
+		snake.add(0, newSegment);
+		sceneObjects.add(newSegment);
+
+	}
 	
 	@Override
 	protected void update() 
@@ -105,26 +117,31 @@ public class Snake extends GameClassic {
 
 		// FIXME: check collision with self and borders
 		SceneObject head = snake.get(0);
-		head.moveBy(direction.x, direction.y);
 		
 		// move snake segments
 		for (int i = snake.size() -1; i > 0; i--) {
 			int x = snake.get(i-1).getX();
 			int y = snake.get(i-1).getY();
 			snake.get(i).moveTo(x, y);
+			
+		}
+		
+		head.moveBy(direction.x, direction.y);
+		
+		for (int i = 2; i < snake.size(); i++) {
+			
+			SceneObject segment = snake.get(i); 
+			int xc = (segment.getX() - segment.getWidth()) /2;
+			int yc = (segment.getY() - segment.getHeight()) /2;
+			
+			// FIXME: Not good for curves.
+			if (head.collide(segment)) stop();
+			//if (head.hit(xc, yc)) start();
 		}
 		
 		// eat delicious candy and grow
-		if (head.collide(candy)) {
-			
-			// calculate new coordinates because the snake might not be
-			// perfectly aligned with the candy
-			int x = head.getX() + direction.x;
-			int y = head.getY() + direction.y;
-			SceneObject newSegment = new SceneObject(head.getImage(), x, y);
-			snake.add(0, newSegment);
-			sceneObjects.add(newSegment);
-
+		if (head.collide(candy)) {	
+			eat();
 			spawnCandy();
 		}
 		
@@ -133,26 +150,33 @@ public class Snake extends GameClassic {
 		if (pressedKey == null) return;
 		//debug("K: "+ pressedKey + " T:"+ KeyEvent.VK_LEFT);
 		
+		Point newDirection = new Point(0, 0);
 		
 		switch (pressedKey.getKeyCode()) {
 		case KeyEvent.VK_LEFT:
-			//snake.moveBy(-snakeSpeed, 0);
-			direction = new Point(-snakeSpeed, 0);
+			newDirection = new Point(-snakeSpeed, 0);
 			break;
 		case KeyEvent.VK_UP:
-			//snake.moveBy(0, -snakeSpeed);
-			direction = new Point(0, -snakeSpeed);
+			newDirection = new Point(0, -snakeSpeed);
 			break;
 		case KeyEvent.VK_RIGHT:
-			//snake.moveBy(snakeSpeed, 0);
-			direction = new Point(snakeSpeed, 0);
+			newDirection = new Point(snakeSpeed, 0);
 			break;
 		case KeyEvent.VK_DOWN:
-			//snake.moveBy(0, snakeSpeed);
-			direction = new Point(0, snakeSpeed);
+			newDirection = new Point(0, snakeSpeed);
 			break;
 		}
+		
+		// can't change to opposite direction
+		int xTest = direction.x + newDirection.x;
+		int yTest = direction.y + newDirection.y;
+		if (xTest != 0 || yTest != 0) direction = newDirection;
 
+	}
+
+	@Override
+	protected void stop() {
+		running = false;
 	}
 
 }

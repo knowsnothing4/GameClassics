@@ -28,10 +28,14 @@ public class GameManager extends JFrame implements Runnable, ActionListener, Key
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private static final String GAME_VERSION = "Game Classics - Alpha 0.3.0";
+	private static final String GAME_VERSION = "Game Classics - Alpha 0.4.0";
 	
-	private static final int WIDTH = 800;
-	private static final int HEIGHT = 600;
+	//FIXME: If the font size used in the menu changes those values
+	// might change as well. I need to find a way to automate this.
+	private static final int xPadding = 5;
+	private static final int yPadding = 51;
+	private static final int WIDTH = 800 + xPadding;
+	private static final int HEIGHT = 600 + yPadding;
 	
 	private Dimension windowDimension;
 	
@@ -149,7 +153,7 @@ public class GameManager extends JFrame implements Runnable, ActionListener, Key
 	
 				if (activeGame != null) {
 					try {
-						activeGame.stop();
+						activeGame.terminate();
 					} catch (Exception e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -160,7 +164,7 @@ public class GameManager extends JFrame implements Runnable, ActionListener, Key
 				screen.setScreenController(activeGame);
 				
 				try {
-					activeGame.start();
+					activeGame.initialize();
 					this.setTitle("ACTIVE:"+ title.getName() +" | SCORE: " +activeGame.getScore());
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
