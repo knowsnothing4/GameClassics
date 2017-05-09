@@ -90,7 +90,9 @@ public class GameIODevice extends JPanel implements MouseListener, KeyListener {
 			repaint();
 			break;
 		case KeyEvent.VK_ENTER:
-			screenController.start();
+			screenController.restart();
+			keyboard = null;
+			mouse = null;
 			break;
 		}
 			

@@ -35,7 +35,7 @@ public abstract class GameClassic {
 	private SceneObject pauseScreen;
 	
 	protected long score;
-	private boolean running;
+	protected boolean running;
 	protected static final Random rng = new Random();	
 	
 	public GameClassic(String name, int width, int height) {
@@ -202,9 +202,14 @@ public abstract class GameClassic {
 		}
 	}
 	
+	protected abstract void stop();
 	protected abstract void update();
-	
 	protected abstract void start();
+	public void restart()
+	{
+		start();
+		running = true;
+	}
 	
 	public void initialize() throws Exception {
 		
@@ -236,15 +241,17 @@ public abstract class GameClassic {
 			debug("PAUSED");	
 		} else {
 			sceneObjects.remove(pauseScreen);
-			debug("UNPAUSED");	
+			debug("RUNNING");	
 		}
 		
 		running = !running;	// FIXME: Save scores everytime the game pouses ?
 	}
 
-	public void stop() throws Exception {
+	public void terminate() throws Exception {
 		running = false;
 		saveScores();
+		stop();
+		sceneObjects.clear();
 	}
 	
 	public void debug(String msg)
