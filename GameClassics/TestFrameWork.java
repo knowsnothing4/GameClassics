@@ -40,6 +40,7 @@ public class TestFrameWork extends GameClassic {
 		bubblePopper = null;
 		collectedBubbles = 0;
 		maxBubbles = 20;
+		setFrameRate(80);
 	}
 
 	/////////////////// object rendering section 
@@ -197,9 +198,8 @@ public class TestFrameWork extends GameClassic {
 	}
 	
 	@Override
-	public void start() throws Exception
+	protected void start()
 	{
-		super.start();
 		
 		// create background image
 		sceneObjects.add(new SceneObject(renderBackground(), 0, 0));
@@ -287,11 +287,8 @@ public class TestFrameWork extends GameClassic {
 	}
 
 	@Override
-	public boolean update() {
-		
-		// is the game running ?
-		if (!super.update()) return false;
-		
+	protected void update() 
+	{
 		//sceneObjects.removeIf(e->e.getY() <= 0 && e.getTag()== REMOVABLE);
 		
 		for (SceneObject bubble: sceneObjects)
@@ -330,7 +327,7 @@ public class TestFrameWork extends GameClassic {
 		
 		// process mouse events
 		MouseEvent mouse = ioDevice.getMouse();
-		if (mouse == null) return false;
+		if (mouse == null) return;
 		int x = mouse.getX();
 		int y = mouse.getY();
 		
@@ -361,7 +358,11 @@ public class TestFrameWork extends GameClassic {
 			break;
 		}
 		//debug("#NUM_OBJ: "+ sceneObjects.size());
-		return true;
+	}
+
+	@Override
+	protected void stop() {
+		
 	}
 
 }
