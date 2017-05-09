@@ -139,9 +139,16 @@ public class SceneObject {
 		// check if the coordinates are inside the image
 		if (x < 0 || y < 0 || x > image.getWidth() || y > image.getHeight())
 			return false;
-
+		
+		int pixel = 0;
 		// check if this point is transparent
-		return ((image.getRGB(x, y) & 0xFF000000) != 0);
+		try {
+			pixel = image.getRGB(x, y);	
+		} catch (Exception e) {
+			System.err.println("(X: "+xpos+", Y: "+ ypos +") failed to find object");
+		}
+		
+		return ((pixel & 0xFF000000) != 0);
 
 	}
 
