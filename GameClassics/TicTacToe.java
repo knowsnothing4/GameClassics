@@ -366,13 +366,10 @@ public class TicTacToe extends GameClassic {
 	}
 
 	@Override
-	public boolean update() {
-		if (!super.update())
-			return false;
+	protected void update() {
 
 		MouseEvent mouse = ioDevice.getMouse();
-		if (mouse == null)
-			return false;
+		if (mouse == null) return;
 
 		int x = mouse.getX();// - (GameClassic.defaultGameWidth - maxWidth)/2;
 		int y = mouse.getY();// - (GameClassic.defaultGameHeight -maxHeight)/2;
@@ -387,9 +384,7 @@ public class TicTacToe extends GameClassic {
 
 			map[index / 3][index % 3] = 1;
 			ticTacToeAI();
-			//tttAI();
 		}
-
-		return true;
+		
 	}
 }
