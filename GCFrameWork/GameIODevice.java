@@ -50,7 +50,7 @@ public class GameIODevice extends JPanel implements MouseListener, KeyListener {
 	@Override
 	protected void paintComponent(Graphics g) {
 		// FIXME: is this line necessary ?
-		super.paintComponent(g);
+		//super.paintComponent(g);
 		
 		if (this.screenController != null) {
 			BufferedImage screen = screenController.readScreen();
@@ -61,8 +61,6 @@ public class GameIODevice extends JPanel implements MouseListener, KeyListener {
 	
 	public KeyEvent getKey()
 	{
-		//if (keyboard == null) return -1;
-		//return keyboard.getKeyCode();
 		KeyEvent k = this.keyboard;
 		this.keyboard = null;
 		return k;
@@ -83,6 +81,19 @@ public class GameIODevice extends JPanel implements MouseListener, KeyListener {
 	@Override
 	public void keyPressed(KeyEvent key) {
 		
+		if (screenController == null) return;
+		
+		switch (key.getKeyCode())
+		{
+		case KeyEvent.VK_ESCAPE:
+			screenController.pause();
+			repaint();
+			break;
+		case KeyEvent.VK_ENTER:
+			screenController.start();
+			break;
+		}
+			
 		keyboard = key;
 		
 	}
