@@ -8,10 +8,10 @@ It will also provide a good sound engine as well as network access in the future
 Here is a list of games I intend to implement and make available in the final version:
 	
 -	TestFramework   	(to test and fix new features)
--	TicTacToe 	    	(Functional)
+-	TicTacToe 	    	(Implemented)
+-	Snake			(Functional)
 -	Tetris          	(Not yet implemented)
 -	MineSweeper	    	(Not yet implemented)
--	Snake			(Not yet implemented)
 -	BreakOut		(Not yet implemented)
 -	GoogleDinossaur		(Not yet implemented)
 -	Ludo 			(Not yet implemented)
@@ -20,7 +20,7 @@ Here is a list of games I intend to implement and make available in the final ve
 -	Monopoly 		(Not yet implemented)
 -	Pacman 			(Not yet implemented)
 -	SpaceInvaders		(Not yet implemented)
--	Game2048 		(Not yet implemented)
+-	2048	 		(Not yet implemented)
 -	Sudoku	 		(Not yet implemented)
 -	Poker	 		(Not yet implemented)
 -	FreeCell		(Not yet implemented)
