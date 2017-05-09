@@ -27,17 +27,19 @@ import GCFrameWork.SceneObject;
 
 public class TestFrameWork extends GameClassic {
 
-	private SceneObject background, bubblePopper, scoreDisplay;
-	private int velocity;
+	private SceneObject bubblePopper, scoreDisplay, bubbleCount;
+	private int velocity, collectedBubbles, maxBubbles;
 	private static final int bubbleSize = 35;
 	private static final int REMOVABLE = 1;
 	private static final int SCOREPOP = 2;
+	private static final int BUBBLE_SPAWN_RATE = 4;	// A number between 0 and 100
 	
 	public TestFrameWork() {
 		super("Test FrameWork", 800, 600);
 		
-		background = null;
 		bubblePopper = null;
+		collectedBubbles = 0;
+		maxBubbles = 20;
 	}
 
 	/////////////////// object rendering section 
@@ -59,7 +61,7 @@ public class TestFrameWork extends GameClassic {
 		g.setColor(new Color(x & 0xFF, y & 0xFF, size & 0xFF));
 		g.fillOval(0, 0, size-1, size-1);
 		
-		// light
+		// reflex
 		g.setColor(new Color(255, 255, 255, 64));
 		g.fillOval(3, 3, size/2, size/2);
 		g.dispose();
@@ -136,7 +138,7 @@ public class TestFrameWork extends GameClassic {
 	
 	private void fadeOutPopScores()
 	{
-		final float decayDelta = 0.08f;
+		final float decayDelta = 0.06f;
 		LinkedList<SceneObject> toRemove = new LinkedList<SceneObject>();
 		
 		for (SceneObject ps : sceneObjects) {
@@ -158,26 +160,40 @@ public class TestFrameWork extends GameClassic {
 	}
 	
 	// Keeps the score values consistent and prints it on screen 
-	private void score(int ds)
+	private void score(int ds) 
 	{
 		this.score += ds;
 		if (score < 0) score = 0;
 		
-		BufferedImage imgScore = scoreDisplay.getImage(); 
-		Graphics2D s = imgScore.createGraphics();
+		sceneObjects.remove(scoreDisplay);
 		
-		s.setBackground(new Color(0, 0 ,0 ,0));
-		s.clearRect(0, 0, imgScore.getWidth(), imgScore.getHeight());
-		s.setColor(new Color(0xCF, 0xCF ,0xCF));
+		String paddedScore = score + "";
+		if (score < 10) paddedScore = "0" + paddedScore;
+		if (score < 100) paddedScore = "00" + paddedScore;
+		
+		Font f = new Font("Verdana", Font.BOLD, 20);
+		scoreDisplay = new SceneObject("Score:" + paddedScore, f, Color.WHITE, 0, 0);
+		final int margin = 8;
+		final int x = margin;
+		final int y = maxHeight - scoreDisplay.getHeight()*3 -margin;
+		scoreDisplay.moveTo(x, y);
+		
+		sceneObjects.add(scoreDisplay);
+	}
 	
-		String padding = "000";
-		if (score > 9) padding = "00";
-		if (score > 99) padding = "0";
+	private boolean spawnBubble(int x, int y)
+	{	
+		if (y < bubblePopper.getHeight()*2) return false;
+
+		// Adds new bubbles
+		x -= bubbleSize /2;
+		y -= bubbleSize /2;
+		SceneObject newObj = new SceneObject(renderBubble(x, y), x, y);
+		newObj.setTag(REMOVABLE);
 		
-		s.setFont(new Font("Times New Roman", Font.BOLD, 28));
-		s.drawString(padding + score,imgScore.getWidth()/2, imgScore.getHeight()/2);
-		s.dispose();
+		sceneObjects.add(newObj);
 		
+		return true;
 	}
 	
 	@Override
@@ -186,8 +202,7 @@ public class TestFrameWork extends GameClassic {
 		super.start();
 		
 		// create background image
-		background = new SceneObject(renderBackground(), 0, 0);
-		sceneObjects.add(background);
+		sceneObjects.add(new SceneObject(renderBackground(), 0, 0));
 		
 		///// Creating the bubble popper object
 		int bubblePopperW = 110, bubblePopperH = 14;
@@ -204,7 +219,27 @@ public class TestFrameWork extends GameClassic {
 										maxWidth - scoreBox, maxHeight - scoreBox);
 		sceneObjects.add(scoreDisplay);
 		score(0);
+		displayBubbleCount();
 	}	
+
+	private void displayBubbleCount()
+	{
+		if (scoreDisplay == null) return;
+		
+		sceneObjects.remove(bubbleCount);
+		
+		String paddedCount = collectedBubbles + "";
+		if (collectedBubbles < 10) paddedCount = "0" + paddedCount;
+		
+		Font f = new Font("Helvetica", Font.BOLD, 18);
+		bubbleCount = new SceneObject("Bubbles: " + paddedCount +"/"+ maxBubbles, f, Color.GREEN, 0, 0);
+		final int x = scoreDisplay.getX();
+		final int y = scoreDisplay.getY() - bubbleCount.getHeight(); 
+		bubbleCount.moveTo(x, y);
+		bubbleCount.setAlpha(0.60f);
+		
+		sceneObjects.add(bubbleCount);
+	}
 
 	// game AI
 	private void bubblePopperAI()
@@ -257,6 +292,8 @@ public class TestFrameWork extends GameClassic {
 		// is the game running ?
 		if (!super.update()) return false;
 		
+		//sceneObjects.removeIf(e->e.getY() <= 0 && e.getTag()== REMOVABLE);
+		
 		for (SceneObject bubble: sceneObjects)
 		{
 			// move everything up except for the popper and background
@@ -264,7 +301,7 @@ public class TestFrameWork extends GameClassic {
 				bubble.moveBy(0, -1);
 
 				// tracks points
-				if (bubble.getY() < 0) {
+				if (bubble.getY() <= 0) {
 					sceneObjects.remove(bubble);
 					scorePopEffect(10, bubble.getX(), bubble.getHeight());
 					score(10);
@@ -277,8 +314,19 @@ public class TestFrameWork extends GameClassic {
 		}
 		
 		fadeOutPopScores();
+		
 		// run the A.I.
 		bubblePopperAI();
+		
+		// spawn a random bubble
+		if (rand(0, 100) < BUBBLE_SPAWN_RATE) {
+			
+			final int margin = bubbleSize + 5;
+			final int yy = maxHeight - margin;
+			int xy = rand(margin, maxWidth - 2*margin);
+			
+			spawnBubble(xy, yy);
+		}
 		
 		// process mouse events
 		MouseEvent mouse = ioDevice.getMouse();
@@ -290,26 +338,29 @@ public class TestFrameWork extends GameClassic {
 		{
 		case 1:
 		
-			if (y < bubblePopper.getHeight()) return false;
-			// Adds new bubbles
-			x -= bubbleSize /2;
-			y -= bubbleSize /2;
-			SceneObject newObj = new SceneObject(renderBubble(x, y), x, y);
-			newObj.setTag(REMOVABLE);
+			if (collectedBubbles > 0 && spawnBubble(x, y)) {
+				--collectedBubbles;
+				displayBubbleCount();	
+			}
 			
-			sceneObjects.add(newObj);
 			break;
 			
 		case 3:
 			
-			// Removes bubbles
-			SceneObject target = getAffectedObject(x, y);
+			if (collectedBubbles < maxBubbles) {
+				// Removes bubbles
+				SceneObject target = getAffectedObject(x, y);
+				
+				if (target != null && target.getTag() == REMOVABLE) {
+					sceneObjects.remove(target);
+					++collectedBubbles;
+					displayBubbleCount();
+				}		
+			}
 			
-			if (target != null && target.getTag() == REMOVABLE)
-				sceneObjects.remove(target);
 			break;
 		}
-		debug("#NUM_OBJ: "+ sceneObjects.size());
+		//debug("#NUM_OBJ: "+ sceneObjects.size());
 		return true;
 	}
 

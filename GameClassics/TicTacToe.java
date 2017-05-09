@@ -185,9 +185,9 @@ public class TicTacToe extends GameClassic {
 	// -1 -1 0 = -2 -> Must win
 	// -1 -1 1 = -1
 	// -1 -1 -1 = -3 -> A.I. wins
-	private void newAI()
+	private void ticTacToeAI()
 	{
-		int[][][] sequences = {
+		final int[][][] sequences = {
 				{{0,0}, {1,1}, {2,2}},	// diagonals	
 				{{2,0}, {1,1}, {0,2}},
 				{{0,0}, {0,1}, {0,2}},	// rows
@@ -195,15 +195,18 @@ public class TicTacToe extends GameClassic {
 				{{2,0}, {2,1}, {2,2}},
 				{{0,0}, {1,0}, {2,0}},	// columns
 				{{0,1}, {1,1}, {2,1}},
-				{{0,2}, {1,2}, {2,2}}
+				{{0,2}, {1,2}, {2,2}}//,
+				//{{2,1}, {2,2}, {1,2}}	// a possible exception (FIXME).
 		};
 		
 		int[] bestSpot = null;
+		if (map[1][1] == 0) bestSpot = new int[]{1, 1};
 		
 		// debug
 		showMap();
 		
-		for (int s = 0; s < 8; s++) {
+		// Test the sequences
+		for (int s = 0; s < sequences.length; s++) {
 			
 			int sum = 0;
 			int[] blankSpot = null;
@@ -229,7 +232,7 @@ public class TicTacToe extends GameClassic {
 				break;
 			}
 			
-			// need blocking
+			// need to block ?
 			if (sum == 2) {
 				int msg = rand(0, blockMessages.length);
 				displayTitle(blockMessages[msg], Color.ORANGE, 0.9f);
@@ -237,7 +240,7 @@ public class TicTacToe extends GameClassic {
 			}
 			
 		}
-		
+		if (bestSpot == null) return; 
 		int i = bestSpot[0];
 		int j = bestSpot[1];
 		map[i][j] = -1;
@@ -383,7 +386,7 @@ public class TicTacToe extends GameClassic {
 			int index = (int) (cell.getZIndex() - baseIndex);
 
 			map[index / 3][index % 3] = 1;
-			newAI();
+			ticTacToeAI();
 			//tttAI();
 		}
 
